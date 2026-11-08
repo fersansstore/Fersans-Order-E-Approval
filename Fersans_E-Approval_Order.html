@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FERSANS | E-Approval Order</title>
+<style>
+:root{--ink:#20242b;--muted:#68707d;--line:#e4e7ec;--bg:#f4f6f8;--gold:#b28a4a;--green:#18794e;--red:#b42318}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+header{background:#17191d;color:#fff;padding:20px max(20px,calc((100% - 1100px)/2));display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{font-weight:800;letter-spacing:3px;font-size:22px}.brand small{display:block;font-size:10px;letter-spacing:2px;color:#c7b18d;font-weight:500}
+main{max-width:1100px;margin:24px auto;padding:0 16px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+button,.btn{border:0;border-radius:8px;padding:10px 14px;font-weight:650;cursor:pointer;background:#20242b;color:#fff}
+button.secondary{background:#fff;color:#303640;border:1px solid var(--line)}button.gold{background:var(--gold)}button.danger{background:#fff0ef;color:var(--red);border:1px solid #ffd2ce}
+button:disabled{opacity:.45;cursor:not-allowed}
+.panel{background:#fff;border:1px solid var(--line);border-radius:13px;padding:20px;margin-bottom:16px;box-shadow:0 2px 10px #17202a08}
+h1{font-size:25px;margin:0 0 4px}h2{font-size:16px;margin:0 0 14px}h3{font-size:14px;margin:16px 0 8px}
+.sub{color:var(--muted)}.status{display:inline-flex;padding:5px 10px;border-radius:30px;background:#fff4df;color:#805b19;font-size:11px;font-weight:800;letter-spacing:.5px}
+.status.approved{background:#e8f6ee;color:var(--green)}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.field label{display:block;font-size:11px;color:var(--muted);font-weight:700;margin-bottom:5px}.field input,.field textarea,.field select{width:100%;border:1px solid var(--line);border-radius:7px;padding:9px 10px;font:inherit;background:#fff;color:var(--ink)}
+.field input[readonly],.field textarea[readonly]{background:#f7f8fa;color:#394150}
+.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:9px 7px;border-bottom:1px solid var(--line);text-align:left}th{font-size:11px;color:var(--muted);background:#fafbfc}td input{width:100%;min-width:65px;border:1px solid var(--line);padding:7px;border-radius:6px}
+.money{display:grid;grid-template-columns:1fr 210px;gap:8px;max-width:460px;margin-left:auto}.money div{padding:5px 0}.money .total{font-size:18px;font-weight:800;border-top:1px solid var(--line);padding-top:10px}
+.checks{display:grid;gap:10px}.check{display:flex;gap:10px;align-items:flex-start}.check input{width:18px;height:18px;accent-color:#20242b;margin-top:2px;flex:none}
+.terms{padding-left:20px}.terms li{margin:9px 0}.notice{padding:12px 14px;background:#fff8e9;border:1px solid #f1dfb9;border-radius:9px;color:#6d501c}
+.signature{border:1px dashed #aab1bb;border-radius:9px;background:#fff;width:100%;height:170px;touch-action:none}
+.sig-actions{display:flex;gap:8px;margin-top:7px}.signature[aria-disabled="true"]{background:#f7f8fa}
+.footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
+.hidden{display:none!important}.readonly-note{font-size:12px;color:var(--muted);margin:0 0 12px}
+.rolebar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.rolebar select{padding:9px;border-radius:8px;border:1px solid #555;background:#252930;color:#fff}
+@media(max-width:700px){.grid{grid-template-columns:1fr 1fr}.money{grid-template-columns:1fr 140px}header{padding:16px}.panel{padding:15px}h1{font-size:21px}}
+@media(max-width:430px){.grid{grid-template-columns:1fr}.toolbar button{flex:1}}
+@media print{body{background:#fff}header{background:#fff;color:#111;padding:10px 0;border-bottom:2px solid #222}header .rolebar,.toolbar,.no-print,.sig-actions{display:none!important}main{margin:0;padding:0;max-width:none}.panel{box-shadow:none;break-inside:avoid;border:1px solid #ddd}.field input,.field textarea{border:0;padding-left:0}.status{border:1px solid #999}.signature{border:1px solid #888}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">FERSANS<small>E-APPROVAL ORDER SYSTEM</small></div>
+  <div class="rolebar no-print">
+    <span style="font-size:12px;color:#d1d5db">Mode akses</span>
+    <select id="role"><option value="provider">Penyedia / Admin</option><option value="customer">Pemesan / Customer</option></select>
+    <button class="secondary" id="roleBtn">Ganti Mode</button>
+  </div>
+</header>
+<main>
+  <div class="toolbar no-print">
+    <button id="newBtn">＋ Order Baru</button><button class="secondary" id="saveBtn">Simpan Perubahan</button>
+    <button class="secondary" id="exportBtn">Ekspor Data Order</button><button class="secondary" id="importBtn">Impor Data</button>
+    <button class="gold" id="printBtn">Cetak / Simpan PDF</button>
+    <input type="file" id="importFile" accept=".json" class="hidden">
+  </div>
+  <section class="panel">
+    <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap">
+      <div><h1>ORDER SERAGAM</h1><div class="sub">Formulir detail pesanan & persetujuan spesifikasi</div></div>
+      <div style="text-align:right"><span id="status" class="status">DRAFT · MENUNGGU PERSETUJUAN</span><div class="sub" style="font-size:11px;margin-top:7px">Nomor Order: <b id="orderLabel">FRS-0001</b></div></div>
+    </div>
+    <p class="readonly-note" id="customerHint">Mode penyedia: seluruh detail pesanan dapat diedit sebelum dikirim kepada pemesan.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Informasi Pemesanan</h2>
+    <div class="grid">
+      <div class="field"><label>Nomor Order</label><input id="orderNo" value="FRS-0001"></div>
+      <div class="field"><label>Tanggal Order</label><input id="orderDate" type="date"></div>
+      <div class="field"><label>Target Penyelesaian</label><input id="dueDate" type="date"></div>
+      <div class="field"><label>Kepada / Nama Pemesan</label><input id="customerName" placeholder="Nama pemesan / instansi"></div>
+      <div class="field"><label>Nama Perusahaan / Instansi</label><input id="company" placeholder="Nama instansi"></div>
+      <div class="field"><label>Kontak Pemesan</label><input id="contact" placeholder="No. HP / email"></div>
+    </div>
+    <h3>Informasi Penyedia</h3>
+    <div class="grid">
+      <div class="field"><label>Nama Penyedia</label><input value="FERSANS" readonly></div>
+      <div class="field"><label>Alamat</label><input value="Jl. Jaksa Agung Suprapto No.91, Ponorogo" readonly></div>
+      <div class="field"><label>Kontak</label><input value="081319273290 · fersansstore@gmail.com" readonly></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Detail Pesanan Seragam</h2>
+    <div class="tablewrap"><table id="itemsTable"><thead><tr><th style="width:23%">Nama / Deskripsi</th><th>SKU</th><th>Qty</th><th>Satuan</th><th>Harga</th><th>Total</th><th class="provider-only">Aksi</th></tr></thead><tbody id="items"></tbody></table></div>
+    <div class="toolbar no-print provider-only" style="margin:12px 0 0"><button class="secondary" id="addItem">＋ Tambah Item</button></div>
+    <div class="money">
+      <div>Subtotal</div><div id="subtotal">Rp0</div>
+      <div>Diskon</div><div class="field"><input id="discount" type="number" min="0" value="0"></div>
+      <div>Biaya tambahan</div><div class="field"><input id="extra" type="number" min="0" value="0"></div>
+      <div class="total">Total</div><div class="total" id="grandTotal">Rp0</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Pembayaran</h2>
+    <div class="grid">
+      <div class="field"><label>Status Pembayaran</label><select id="paymentStatus"><option>Belum Bayar</option><option>DP (Down Payment)</option><option>Lunas</option></select></div>
+      <div class="field"><label>Nominal DP / Pembayaran</label><input id="paid" type="number" min="0" value="0"></div>
+      <div class="field"><label>Referensi Pembayaran</label><input id="paymentRef" placeholder="Nomor referensi (opsional)"></div>
+    </div>
+    <div class="money"><div>Sudah Dibayar</div><div id="paidView">Rp0</div><div>Sisa Pembayaran</div><div id="balance">Rp0</div></div>
+    <p class="sub" style="font-size:12px">Pembayaran via Bank: BCA 289 107 1649 · BRI 0070 0100 3106 569 (a.n. MOHAMMAD ATHA AMMAR)</p>
+  </section>
+
+  <section class="panel">
+    <h2>A. Konfirmasi Spesifikasi</h2>
+    <p class="sub">Pemesan wajib memastikan seluruh spesifikasi pesanan telah sesuai sebelum memberikan persetujuan.</p>
+    <div class="checks" id="specChecks">
+      <label class="check"><input type="checkbox" class="customer-check"> Model dan desain seragam telah sesuai dengan kesepakatan.</label>
+      <label class="check"><input type="checkbox" class="customer-check"> Warna dan bahan telah sesuai dengan kesepakatan.</label>
+      <label class="check"><input type="checkbox" class="customer-check"> Detail bordir, payet, atau atribut telah sesuai.</label>
+      <label class="check"><input type="checkbox" class="customer-check"> Jumlah pesanan telah sesuai.</label>
+      <label class="check"><input type="checkbox" class="customer-check"> Opsi ukuran telah diperiksa dan sesuai.</label>
+      <label class="check"><input type="checkbox" class="customer-check"> Seluruh detail pesanan telah diperiksa dan disetujui.</label>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>B. Ketentuan dan Persetujuan Pesanan</h2>
+    <p>Dengan memberikan persetujuan pada formulir E-Approval Order ini, pihak pemesan menyatakan telah membaca, memahami, dan menyetujui ketentuan berikut:</p>
+    <ol class="terms">
+      <li><b>Persetujuan Model dan Desain.</b> Model, desain, warna, bahan, serta detail seragam yang telah disetujui merupakan spesifikasi final dan menjadi acuan utama dalam proses produksi.</li>
+      <li><b>Persetujuan Ukuran.</b> Seluruh ukuran yang telah dikonfirmasi dan disetujui oleh pihak pemesan dianggap FINAL. Pemesan bertanggung jawab memastikan ketepatan data ukuran sebelum persetujuan diberikan.</li>
+      <li><b>Tidak Dapat Diubah atau Ditukar.</b> Setelah E-Approval diberikan dan pesanan masuk ke tahap produksi, model dan ukuran tidak dapat diubah, diganti, ditukar, maupun dibatalkan atas permintaan pemesan, termasuk dengan alasan perubahan preferensi atau ketidaksesuaian pilihan yang sebelumnya telah disetujui.</li>
+      <li><b>Tanggung Jawab Pemeriksaan.</b> Segala kesalahan dalam pemilihan model, ukuran, warna, jumlah, maupun spesifikasi yang telah disetujui oleh pemesan menjadi tanggung jawab pihak pemesan.</li>
+      <li><b>Pengecualian Kesalahan Produksi.</b> Ketentuan tidak dapat diubah atau ditukar tidak berlaku apabila ditemukan kesalahan produksi yang terbukti berasal dari pihak penyedia, seperti ukuran tidak sesuai dengan data yang telah disetujui, model berbeda dari spesifikasi final, atau cacat produksi. Penyelesaian akan dilakukan melalui pemeriksaan dan kesepakatan kedua belah pihak.</li>
+      <li><b>Persetujuan sebagai Dasar Produksi.</b> E-Approval ini menjadi bukti persetujuan resmi dan dasar bagi pihak penyedia untuk melanjutkan pesanan ke tahap produksi.</li>
+    </ol>
+    <div class="notice"><b>Perhatian:</b> Mohon periksa kembali seluruh detail pesanan. Setelah disetujui, data spesifikasi akan dikunci sebagai acuan produksi.</div>
+  </section>
+
+  <section class="panel">
+    <h2>C. Pernyataan Persetujuan Pemesan</h2>
+    <p>Saya menyatakan bahwa seluruh detail pesanan, termasuk model, desain, warna, bahan, jumlah, dan ukuran telah diperiksa dengan benar.</p>
+    <p>Saya telah membaca, memahami, dan menyetujui seluruh ketentuan yang tercantum dalam formulir ini, termasuk ketentuan bahwa model dan ukuran yang telah difinalisasi tidak dapat diubah atau ditukar atas permintaan pemesan.</p>
+    <p><b>Persetujuan ini diberikan secara sadar tanpa adanya paksaan dari pihak mana pun.</b></p>
+    <div class="checks" style="margin:16px 0">
+      <label class="check"><input type="checkbox" id="agree1" class="customer-check"> Saya menyatakan seluruh detail pesanan sudah benar dan sesuai.</label>
+      <label class="check"><input type="checkbox" id="agree2" class="customer-check"> Saya memahami bahwa model dan ukuran yang telah disetujui tidak dapat diubah atau ditukar atas permintaan saya setelah masuk produksi.</label>
+      <label class="check"><input type="checkbox" id="agree3" class="customer-check"> Saya menyetujui seluruh ketentuan E-Approval Order ini dan memberikan persetujuan untuk proses produksi.</label>
+    </div>
+    <div class="grid">
+      <div class="field"><label>Nama Penanggung Jawab</label><input id="signerName" placeholder="Nama lengkap"></div>
+      <div class="field"><label>Jabatan</label><input id="signerTitle" placeholder="Jabatan"></div>
+      <div class="field"><label>Tanggal Persetujuan</label><input id="signDate" type="date"></div>
+    </div>
+    <h3>Tanda Tangan Digital Pemesan</h3>
+    <canvas id="signature" class="signature" width="1000" height="260"></canvas>
+    <div class="sig-actions no-print"><button class="secondary" id="clearSig">Hapus Tanda Tangan</button><span class="sub" style="font-size:12px;align-self:center">Gunakan jari, mouse, atau stylus.</span></div>
+    <p class="sub" style="font-size:11px">Tanda tangan digital dan identitas di atas menjadi bagian dari catatan persetujuan order ini.</p>
+  </section>
+
+  <section class="panel">
+    <h2>D. Validasi Penyedia</h2>
+    <div class="grid">
+      <div class="field"><label>Nama Petugas Fersans</label><input id="providerName" placeholder="Nama petugas"></div>
+      <div class="field"><label>Tanggal Validasi</label><input id="providerDate" type="date"></div>
+      <div class="field"><label>Status Order</label><input id="approvalState" value="Menunggu persetujuan pemesan" readonly></div>
+    </div>
+    <div class="footer">FERSANS · Dokumen ini merupakan bukti persetujuan spesifikasi pesanan seragam dan menjadi acuan dalam proses produksi.</div>
+  </section>
+
+  <section class="panel no-print" id="actionPanel">
+    <h2>Aksi</h2>
+    <p class="sub" id="actionHelp">Penyedia dapat mengedit dan menyimpan order. Berikan formulir ini kepada pemesan untuk proses persetujuan.</p>
+    <div class="toolbar" style="margin:0">
+      <button class="gold" id="approveBtn">Setujui & Kunci Order</button>
+      <button class="secondary" id="resetApproval">Reset Persetujuan (Admin)</button>
+    </div>
+  </section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const rupiah=n=>'Rp'+(Number(n)||0).toLocaleString('id-ID');
+let approved=false, signatureDirty=false, drawing=false, last=null;
+const today=new Date().toISOString().slice(0,10);
+$('orderDate').value=today;$('signDate').value=today;$('providerDate').value=today;
+function addRow(item={name:'',sku:'',qty:1,unit:'pcs',price:0}){
+ const tr=document.createElement('tr');
+ tr.innerHTML=`<td><input data-k="name" placeholder="Nama / deskripsi"></td><td><input data-k="sku" placeholder="SKU"></td><td><input data-k="qty" type="number" min="0" value="1"></td><td><input data-k="unit" value="pcs"></td><td><input data-k="price" type="number" min="0" value="0"></td><td class="rowtotal">Rp0</td><td class="provider-only"><button class="danger remove">Hapus</button></td>`;
+ tr.querySelectorAll('[data-k]').forEach(el=>{el.value=item[el.dataset.k]??'';el.addEventListener('input',calc)});
+ tr.querySelector('.remove').addEventListener('click',()=>{tr.remove();calc()});
+ $('items').appendChild(tr);calc();
+}
+function getItems(){return [...$('items').rows].map(r=>Object.fromEntries([...r.querySelectorAll('[data-k]')].map(e=>[e.dataset.k,e.type==='number'?Number(e.value):e.value])))}
+function calc(){
+ let sum=0;[...$('items').rows].forEach(r=>{let q=Number(r.querySelector('[data-k=qty]').value)||0,p=Number(r.querySelector('[data-k=price]').value)||0,t=q*p;sum+=t;r.querySelector('.rowtotal').textContent=rupiah(t)});
+ let total=Math.max(0,sum-(Number($('discount').value)||0)+(Number($('extra').value)||0));
+ $('subtotal').textContent=rupiah(sum);$('grandTotal').textContent=rupiah(total);$('paidView').textContent=rupiah($('paid').value);$('balance').textContent=rupiah(Math.max(0,total-(Number($('paid').value)||0)));
+}
+['discount','extra','paid'].forEach(id=>$(id).addEventListener('input',calc));
+function fields(){let o={};document.querySelectorAll('main input:not([data-k]):not([type=file]),main select').forEach(e=>{if(e.id)o[e.id]=e.value});o.items=getItems();o.checks=[...document.querySelectorAll('.customer-check')].map(e=>e.checked);o.approved=approved;o.signature=$('signature').toDataURL();return o}
+function load(o){
+ Object.keys(o).forEach(k=>{let e=$(k);if(e&&typeof o[k]==='string')e.value=o[k]});
+ $('items').innerHTML='';(o.items||[]).forEach(addRow);if(!(o.items||[]).length)addRow();
+ document.querySelectorAll('.customer-check').forEach((e,i)=>e.checked=!!(o.checks||[])[i]);
+ approved=!!o.approved;if(o.signature){let im=new Image();im.onload=()=>{let c=$('signature').getContext('2d');c.clearRect(0,0,1000,260);c.drawImage(im,0,0,1000,260)};im.src=o.signature}
+ updateStatus();calc();applyRole();
+}
+function save(){localStorage.setItem('fersans-order',JSON.stringify(fields()));alert('Order tersimpan di browser ini.');}
+function updateStatus(){$('status').textContent=approved?'FINAL APPROVED · TERKUNCI':'DRAFT · MENUNGGU PERSETUJUAN';$('status').className='status'+(approved?' approved':'');$('approvalState').value=approved?'Final Approved':'Menunggu persetujuan pemesan';$('orderLabel').textContent=$('orderNo').value||'-'}
+function applyRole(){
+ const role=$('role').value, customer=role==='customer';
+ document.querySelectorAll('.provider-only').forEach(e=>e.classList.toggle('hidden',customer));
+ const providerFields=['orderNo','orderDate','dueDate','customerName','company','contact','discount','extra','paymentStatus','paid','paymentRef','providerName','providerDate'];
+ providerFields.forEach(id=>{let e=$(id);if(e)e.disabled=customer||approved});
+ document.querySelectorAll('#items input').forEach(e=>e.disabled=customer||approved);
+ document.querySelectorAll('.customer-check').forEach(e=>e.disabled=!customer||approved);
+ ['signerName','signerTitle','signDate'].forEach(id=>$(id).disabled=!customer||approved);
+ $('signature').style.pointerEvents=customer&&!approved?'auto':'none';$('signature').setAttribute('aria-disabled',String(!customer||approved));
+ $('clearSig').disabled=!customer||approved;
+ $('approveBtn').classList.toggle('hidden',!customer||approved);
+ $('resetApproval').classList.toggle('hidden',customer||!approved);
+ $('saveBtn').classList.toggle('hidden',customer);
+ $('addItem').disabled=customer||approved;
+ $('customerHint').textContent=customer?'Mode pemesan: detail order hanya dapat dilihat. Lengkapi persetujuan dan tanda tangan.':'Mode penyedia: edit detail order sebelum persetujuan. Setelah disetujui, spesifikasi terkunci.';
+ $('actionHelp').textContent=customer?'Centang seluruh pernyataan, isi identitas penanggung jawab, lalu setujui order.':'Penyedia dapat mengedit dan menyimpan order. Berikan formulir ini kepada pemesan untuk proses persetujuan.';
+ updateStatus();
+}
+$('roleBtn').onclick=()=>applyRole();$('role').onchange=applyRole;
+$('addItem').onclick=()=>{if(!approved)addRow()};
+$('saveBtn').onclick=save;$('printBtn').onclick=()=>window.print();
+$('newBtn').onclick=()=>{if(!confirm('Buat order baru? Data order saat ini akan diganti.'))return;approved=false;document.querySelectorAll('main input').forEach(e=>{if(e.type==='checkbox')e.checked=false;else if(e.id&&!['providerName'].includes(e.id))e.value=''});$('orderNo').value='FRS-'+String(Date.now()).slice(-6);$('orderDate').value=today;$('signDate').value=today;$('providerDate').value=today;$('items').innerHTML='';addRow();clearSig();localStorage.removeItem('fersans-order');applyRole()};
+$('exportBtn').onclick=()=>{let blob=new Blob([JSON.stringify(fields(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=($('orderNo').value||'order')+'.json';a.click();URL.revokeObjectURL(a.href)};
+$('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{load(JSON.parse(await f.text()));alert('Data order berhasil dimuat.')}catch{alert('File JSON tidak valid.')}};
+function clearSig(){let c=$('signature').getContext('2d');c.clearRect(0,0,1000,260);signatureDirty=false}
+$('clearSig').onclick=clearSig;
+const canvas=$('signature'),ctx=canvas.getContext('2d');ctx.strokeStyle='#111';ctx.lineWidth=3;ctx.lineCap='round';ctx.lineJoin='round';
+function point(e){let r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height}}
+canvas.addEventListener('pointerdown',e=>{if($('role').value!=='customer'||approved)return;drawing=true;last=point(e);canvas.setPointerCapture(e.pointerId)});
+canvas.addEventListener('pointermove',e=>{if(!drawing)return;let p=point(e);ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.stroke();last=p;signatureDirty=true});
+['pointerup','pointercancel','pointerleave'].forEach(ev=>canvas.addEventListener(ev,()=>drawing=false));
+$('approveBtn').onclick=()=>{
+ const checks=[...document.querySelectorAll('.customer-check')];
+ if(checks.some(e=>!e.checked)){alert('Mohon centang seluruh konfirmasi spesifikasi dan pernyataan persetujuan.');return}
+ if(!$('signerName').value.trim()||!$('signDate').value){alert('Isi nama penanggung jawab dan tanggal persetujuan.');return}
+ if(!signatureDirty&&!localStorage.getItem('fersans-order')){alert('Mohon bubuhkan tanda tangan digital terlebih dahulu.');return}
+ if(!confirm('Anda menyetujui seluruh spesifikasi dan ketentuan. Setelah disetujui, order akan dikunci. Lanjutkan?'))return;
+ approved=true;localStorage.setItem('fersans-order',JSON.stringify(fields()));updateStatus();applyRole();alert('Persetujuan berhasil direkam pada browser ini. Simpan/ekspor data order untuk arsip penyedia.');
+};
+$('resetApproval').onclick=()=>{if(!confirm('Reset persetujuan? Lakukan hanya jika ada koreksi sebelum produksi dan persetujuan ulang diperlukan.'))return;approved=false;clearSig();document.querySelectorAll('.customer-check').forEach(e=>e.checked=false);$('signerName').value='';$('signerTitle').value='';$('signDate').value=today;applyRole()};
+$('orderNo').addEventListener('input',updateStatus);
+let saved=localStorage.getItem('fersans-order');if(saved){try{load(JSON.parse(saved))}catch{addRow()}}else{addRow();applyRole()}
+</script>
+</body></html>
